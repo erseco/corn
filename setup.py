@@ -18,7 +18,7 @@ setup_requirements = [ ]
 test_requirements = [ ]
 
 setup(
-    author="Tomas",
+    author="Tomas Garzon",
     author_email='tomas@openexo.com',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
