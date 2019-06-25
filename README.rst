@@ -6,8 +6,8 @@ Corn
 .. image:: https://img.shields.io/pypi/v/corn.svg
         :target: https://pypi.python.org/pypi/corn
 
-.. image:: https://img.shields.io/travis/tomasgarzon/corn.svg
-        :target: https://travis-ci.org/tomasgarzon/corn
+.. image:: https://img.shields.io/travis/exolever/corn.svg
+        :target: https://travis-ci.org/exolever/corn
 
 .. image:: https://readthedocs.org/projects/corn/badge/?version=latest
         :target: https://corn.readthedocs.io/en/latest/?badge=latest
