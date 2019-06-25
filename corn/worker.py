@@ -7,7 +7,10 @@ class CornWorker(object):
     def __init__(self, app):
         self.app = app
 
-    def start(self):
+    def __call__(self):
+        self.run()
+
+    def run(self):
         queues = []
         for queue, routing_key, function in self.app.queues:
             exchange = Exchange(

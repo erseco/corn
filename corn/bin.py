@@ -1,31 +1,53 @@
 import argparse
 import sys
+import os
+
+from celery.utils import imports
 
 from .worker import CornWorker
 
 
 def main():
-    import ipdb; ipdb.set_trace()
     command = CornCommand()
     command.execute_from_commandline()
-    app = command.get_app()
-    if command.is_worker:
-        worker = CornWorker(app)
-        worker.start()
 
 
 class CornCommand:
     Parser = argparse.ArgumentParser
+    args_name = 'args'
+    commands = {
+        'worker': CornWorker
+    }
 
     def execute_from_commandline(self):
         argv = list(sys.argv)
         self.prog_name = os.path.basename(argv[0])
-        return self.handle_argv(self.prog_name, argv[1:])
+        args, options = self.handle_argv(self.prog_name, argv[1:])
+        if options.get('worker'):
+            cls = self.commands.get('worker')
+            return cls(self.app)()
 
     def handle_argv(self, prog_name, argv, command=None):
         options, args = self.prepare_args(
             *self.parse_options(prog_name, argv, command))
-        return self(*args, **options)
+        self.set_app(options)
+        return args, options
+
+    def prepare_args(self, options, args):
+        return options, args
+
+    def find_app(self, app):
+        from .utils.app import find_app
+        return find_app(app, symbol_by_name=self.symbol_by_name)
+
+    def symbol_by_name(self, name, imp=imports.import_from_cwd):
+        return imports.symbol_by_name(name, imp=imp)
+
+    def set_app(self, options):
+        self.app = self.find_app(options.get('app'))
+
+    def get_app(self):
+        return self.app
 
     def parse_options(self, prog_name, arguments, command=None):
         """Parse the available options."""
@@ -35,28 +57,24 @@ class CornCommand:
         options = vars(self.parser.parse_args(arguments))
         return options, options.pop(self.args_name, None) or []
 
+    def usage(self, command):
+        return '%(prog)s {0} [options] {1}'.format(command, sys.argv)
+
     def create_parser(self, prog_name, command=None):
         # for compatibility with optparse usage.
         usage = self.usage(command).replace('%prog', '%(prog)s')
         parser = self.Parser(
             prog=prog_name,
             usage=usage,
-            epilog=self._format_epilog(self.epilog),
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            description=self._format_description(self.description),
         )
-        self._add_version_argument(parser)
         self.add_preload_arguments(parser)
-        self.add_arguments(parser)
-        self.add_compat_options(parser, self.get_options())
-        self.add_compat_options(parser, self.app.user_options['preload'])
-
-        if self.supports_args:
-            # for backward compatibility with optparse, we automatically
-            # add arbitrary positional args.
-            parser.add_argument(self.args_name, nargs='*')
-        return self.prepare_parser(parser)
+        return parser
 
     def add_preload_arguments(self, parser):
         group = parser.add_argument_group('Global Options')
         group.add_argument('-A', '--app', default=None)
+        group.add_argument('worker', help='Worker')
+
+    def __call__(self, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
